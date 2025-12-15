@@ -161,6 +161,9 @@ $total_pendapatan = $total_result['total_pendapatan'] ?? 0;
                     <a href="produk_index.php" class="nav-link">
                         <i class="fas fa-box"></i> Daftar Produk
                     </a>
+                    <a href="kategori_index.php" class="nav-link">
+                        <i class="fas fa-tag"></i> Kelola Kategori
+                    </a>
                     <a href="transaksi_list.php" class="nav-link active">
                         <i class="fas fa-list"></i> Transaksi
                     </a>

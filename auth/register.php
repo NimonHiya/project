@@ -103,13 +103,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
             border: 1px solid #ddd;
             border-radius: 8px;
             padding: 12px 15px;
-            margin-bottom: 15px;
+            /* margin-bottom dihapus karena ada input-group */
             transition: all 0.3s;
         }
         .form-control:focus {
             border-color: #6f4e37;
             box-shadow: 0 0 0 0.2rem rgba(111, 78, 55, 0.25);
         }
+        /* START: Styling Tambahan untuk Toggle Password */
+        .input-group .form-control {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+
+        .input-group .btn-outline-secondary {
+            border-color: #ddd;
+            background-color: #fff;
+            color: #666; 
+            transition: all 0.3s;
+            border-left: none; 
+            border-radius: 0 8px 8px 0; 
+        }
+
+        .input-group .btn-outline-secondary:hover {
+            background-color: #f8f8f8;
+            color: #6f4e37;
+            border-color: #6f4e37;
+            z-index: 2;
+        }
+
+        .input-group .btn-outline-secondary:focus {
+            box-shadow: none;
+            border-color: #6f4e37;
+        }
+        /* END: Styling Tambahan untuk Toggle Password */
+
         .btn-register {
             width: 100%;
             background: linear-gradient(135deg, #6f4e37 0%, #8b5a3c 100%);
@@ -154,7 +182,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
         <div class="register-header">
             <i class="fas fa-user-plus"></i>
             <h1>Daftar Akun</h1>
-            <p>Kasir Kopi - Sistem Manajemen Penjualan</p>
+            <p>Kopi 21 - Sistem Manajemen Penjualan</p>
         </div>
 
         <div class="register-body">
@@ -188,17 +216,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
 
                 <div class="mb-3">
                     <label for="password" class="form-label">Password</label>
-                    <input type="password" class="form-control" id="password" name="password" 
-                           placeholder="Masukkan password" required>
+                    <div class="input-group">
+                        <input type="password" class="form-control" id="password" name="password" 
+                               placeholder="Masukkan password" required aria-label="Password">
+                        <button class="btn btn-outline-secondary" type="button" id="togglePassword" title="Tampilkan/Sembunyikan Password">
+                            <i class="fas fa-eye"></i> 
+                        </button>
+                    </div>
                     <small class="form-text text-muted">Minimal 6 karakter</small>
                 </div>
-
                 <div class="mb-3">
                     <label for="password_confirm" class="form-label">Konfirmasi Password</label>
-                    <input type="password" class="form-control" id="password_confirm" name="password_confirm" 
-                           placeholder="Masukkan password lagi" required>
+                    <div class="input-group">
+                        <input type="password" class="form-control" id="password_confirm" name="password_confirm" 
+                               placeholder="Masukkan password lagi" required aria-label="Konfirmasi Password">
+                        <button class="btn btn-outline-secondary" type="button" id="togglePasswordConfirm" title="Tampilkan/Sembunyikan Password Konfirmasi">
+                            <i class="fas fa-eye"></i> 
+                        </button>
+                    </div>
                 </div>
-
                 <button type="submit" name="register" class="btn-register">
                     <i class="fas fa-user-check"></i> Daftar
                 </button>
@@ -211,6 +247,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
 
+    <script>
+        // Fungsi untuk toggle password visibility
+        function setupPasswordToggle(toggleId, inputId) {
+            const toggleButton = document.getElementById(toggleId);
+            const passwordInput = document.getElementById(inputId);
+
+            if (toggleButton && passwordInput) {
+                toggleButton.addEventListener('click', function () {
+                    // Toggle the type attribute
+                    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                    passwordInput.setAttribute('type', type);
+                    
+                    // Toggle the eye icon: fa-eye (show) / fa-eye-slash (hide)
+                    this.querySelector('i').classList.toggle('fa-eye');
+                    this.querySelector('i').classList.toggle('fa-eye-slash');
+                });
+            }
+        }
+
+        // Setup untuk field Password utama
+        setupPasswordToggle('togglePassword', 'password');
+
+        // Setup untuk field Konfirmasi Password
+        setupPasswordToggle('togglePasswordConfirm', 'password_confirm');
+    </script>
+    </body>
+</html>

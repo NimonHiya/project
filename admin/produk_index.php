@@ -8,6 +8,10 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     exit;
 }
 
+$user_id = $_SESSION['user_id'];
+$success = '';
+$error = '';
+
 // Handle delete
 if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
     $id = (int)$_GET['delete'];
@@ -24,7 +28,8 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
         if ($product && !empty($product['gambar'])) {
             $image_path = '../uploads/produk/' . $product['gambar'];
             if (file_exists($image_path)) {
-                unlink($image_path);
+                // Hati-hati: Pastikan Anda memiliki izin tulis pada folder ini
+                unlink($image_path); 
             }
         }
 
@@ -35,12 +40,12 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
         
         $success = 'Produk berhasil dihapus';
     } catch (Exception $e) {
-        $error = 'Gagal menghapus produk';
+        $error = 'Gagal menghapus produk: ' . $e->getMessage();
     }
 }
 
-// Get all products
-$products = $conn->query("SELECT id, nama_produk, deskripsi, harga, gambar, stok FROM produk ORDER BY id DESC");
+// Get all products. Note: p.kategori (kolom lama) tetap di-select sebagai referensi jika diperlukan.
+$products = $conn->query("SELECT p.id, p.nama_produk, p.kategori, p.kategori_id, p.deskripsi, p.harga, p.gambar, p.stok, k.nama AS nama_kategori FROM produk p LEFT JOIN kategori k ON p.kategori_id = k.id ORDER BY p.id DESC");
 ?>
 
 <!DOCTYPE html>
@@ -130,10 +135,22 @@ $products = $conn->query("SELECT id, nama_produk, deskripsi, harga, gambar, stok
             justify-content: center;
             color: #999;
         }
+        /* START: Custom Logout Button Style */
+        .btn-logout {
+            background-color: #d9534f;
+            border-color: #d43f3a;
+            color: white;
+            transition: all 0.3s;
+        }
+        .btn-logout:hover {
+            background-color: #c9302c;
+            border-color: #ac2925;
+            color: white;
+        }
+        /* END: Custom Logout Button Style */
     </style>
 </head>
 <body>
-    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
             <a class="navbar-brand" href="../index.php">
@@ -143,14 +160,16 @@ $products = $conn->query("SELECT id, nama_produk, deskripsi, harga, gambar, stok
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item me-3">
+                        <span class="nav-link text-white">
                             <i class="fas fa-user-circle"></i> <?php echo htmlspecialchars($_SESSION['username']); ?>
+                        </span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-sm btn-logout" href="../auth/logout.php">
+                            <i class="fas fa-sign-out-alt"></i> Logout
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                            <li><a class="dropdown-item" href="../auth/logout.php">Logout</a></li>
-                        </ul>
                     </li>
                 </ul>
             </div>
@@ -159,7 +178,6 @@ $products = $conn->query("SELECT id, nama_produk, deskripsi, harga, gambar, stok
 
     <div class="container-fluid">
         <div class="row">
-            <!-- Sidebar -->
             <nav class="col-md-2 sidebar">
                 <div class="nav flex-column">
                     <a href="../index.php" class="nav-link">
@@ -168,13 +186,15 @@ $products = $conn->query("SELECT id, nama_produk, deskripsi, harga, gambar, stok
                     <a href="produk_index.php" class="nav-link active">
                         <i class="fas fa-box"></i> Daftar Produk
                     </a>
+                    <a href="kategori_index.php" class="nav-link">
+                        <i class="fas fa-tag"></i> Kelola Kategori
+                    </a>
                     <a href="../admin/transaksi_list.php" class="nav-link">
                         <i class="fas fa-list"></i> Transaksi
                     </a>
                 </div>
             </nav>
 
-            <!-- Main Content -->
             <main class="col-md-10 content">
                 <div class="card">
                     <div class="card-header bg-light d-flex justify-content-between align-items-center">
@@ -184,14 +204,14 @@ $products = $conn->query("SELECT id, nama_produk, deskripsi, harga, gambar, stok
                         </a>
                     </div>
                     <div class="card-body">
-                        <?php if (isset($success)): ?>
+                        <?php if (!empty($success)): ?>
                             <div class="alert alert-success alert-dismissible fade show" role="alert">
                                 <i class="fas fa-check-circle"></i> <?php echo htmlspecialchars($success); ?>
                                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                             </div>
                         <?php endif; ?>
 
-                        <?php if (isset($error)): ?>
+                        <?php if (!empty($error)): ?>
                             <div class="alert alert-danger alert-dismissible fade show" role="alert">
                                 <i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($error); ?>
                                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -205,6 +225,7 @@ $products = $conn->query("SELECT id, nama_produk, deskripsi, harga, gambar, stok
                                         <tr>
                                             <th width="5%">ID</th>
                                             <th>Nama Produk</th>
+                                            <th width="15%">Kategori</th>
                                             <th width="15%">Harga</th>
                                             <th width="10%">Stok</th>
                                             <th width="15%">Aksi</th>
@@ -217,7 +238,10 @@ $products = $conn->query("SELECT id, nama_produk, deskripsi, harga, gambar, stok
                                                 <td>
                                                     <div class="d-flex align-items-center">
                                                         <?php if (!empty($row['gambar'])): ?>
-                                                            <img src="../uploads/produk/<?php echo $row['gambar']; ?>" alt="<?php echo htmlspecialchars($row['nama_produk']); ?>" class="product-image">
+                                                            <img src="../uploads/produk/<?php echo $row['gambar']; ?>" 
+                                                                 alt="<?php echo htmlspecialchars($row['nama_produk']); ?>" 
+                                                                 class="product-image"
+                                                                 onerror="this.onerror=null; this.src='../uploads/produk/default.jpg';"> 
                                                         <?php else: ?>
                                                             <div class="product-image-placeholder">
                                                                 <i class="fas fa-image"></i>
@@ -226,10 +250,20 @@ $products = $conn->query("SELECT id, nama_produk, deskripsi, harga, gambar, stok
                                                         <span class="ms-2"><?php echo htmlspecialchars($row['nama_produk']); ?></span>
                                                     </div>
                                                 </td>
+                                                <td><?php echo htmlspecialchars($row['nama_kategori'] ?? '-'); ?></td>
                                                 <td>Rp <?php echo number_format($row['harga'], 0, ',', '.'); ?></td>
                                                 <td>
-                                                    <span class="badge <?php echo ($row['stok'] > 5) ? 'bg-success' : 'bg-warning'; ?>">
-                                                        <?php echo htmlspecialchars($row['stok']); ?>
+                                                    <?php 
+                                                         $stok_val = (int)$row['stok'];
+                                                         $badge_class = 'bg-success';
+                                                         if ($stok_val <= 5 && $stok_val > 0) {
+                                                             $badge_class = 'bg-warning text-dark';
+                                                         } elseif ($stok_val <= 0) {
+                                                             $badge_class = 'bg-danger';
+                                                         }
+                                                     ?>
+                                                    <span class="badge <?php echo $badge_class; ?>">
+                                                        <?php echo htmlspecialchars($stok_val); ?>
                                                     </span>
                                                 </td>
                                                 <td>
@@ -237,7 +271,7 @@ $products = $conn->query("SELECT id, nama_produk, deskripsi, harga, gambar, stok
                                                         <i class="fas fa-edit"></i> Edit
                                                     </a>
                                                     <a href="?delete=<?php echo $row['id']; ?>" class="btn btn-sm btn-danger" 
-                                                       onclick="return confirm('Yakin ingin menghapus?')">
+                                                       onclick="return confirm('Yakin ingin menghapus produk <?php echo htmlspecialchars($row['nama_produk']); ?>?')">
                                                         <i class="fas fa-trash"></i> Hapus
                                                     </a>
                                                 </td>
@@ -260,4 +294,3 @@ $products = $conn->query("SELECT id, nama_produk, deskripsi, harga, gambar, stok
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-

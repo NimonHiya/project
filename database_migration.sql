@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS produk (
     id INT PRIMARY KEY AUTO_INCREMENT,
     nama_produk VARCHAR(100) NOT NULL,
+    kategori VARCHAR(100) NULL,
     deskripsi TEXT NULL,
     harga DECIMAL(10,2) NOT NULL,
     gambar VARCHAR(255) NULL,
@@ -78,3 +79,15 @@ ALTER TABLE transaksi ADD COLUMN IF NOT EXISTS metode_pembayaran VARCHAR(50) DEF
 ALTER TABLE transaksi ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'pending' AFTER metode_pembayaran;
 ALTER TABLE produk ADD COLUMN IF NOT EXISTS deskripsi TEXT NULL AFTER nama_produk;
 ALTER TABLE produk ADD COLUMN IF NOT EXISTS gambar VARCHAR(255) NULL AFTER harga;
+ALTER TABLE produk ADD COLUMN IF NOT EXISTS kategori VARCHAR(100) NULL AFTER nama_produk;
+-- Tabel kategori terpisah untuk normalisasi data
+CREATE TABLE IF NOT EXISTS kategori (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    nama VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tambahkan kolom kategori_id di tabel produk (opsional, nullable)
+ALTER TABLE produk ADD COLUMN IF NOT EXISTS kategori_id INT NULL AFTER nama_produk;
+-- Buat foreign key jika diinginkan (pastikan tidak ada data yang melanggar constraint)
+-- ALTER TABLE produk ADD CONSTRAINT fk_produk_kategori FOREIGN KEY (kategori_id) REFERENCES kategori(id) ON DELETE SET NULL;

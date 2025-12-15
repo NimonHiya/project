@@ -95,9 +95,12 @@ $pendapatan = $row_pendapatan['total'] ?? 0;
             font-size: 2rem;
             font-weight: bold;
         }
-        .stat-card i {
-            font-size: 2.5rem;
+        .stat-card .stat-icon-wrapper {
             opacity: 0.3;
+            line-height: 1;
+        }
+        .stat-card .stat-icon-wrapper i {
+            font-size: 2.5rem;
         }
         .content {
             padding: 20px;
@@ -142,10 +145,20 @@ $pendapatan = $row_pendapatan['total'] ?? 0;
             margin-top: 15px;
             font-weight: bold;
         }
+        .btn-logout {
+            background-color: #d9534f;
+            border-color: #d43f3a;
+            color: white;
+            transition: all 0.3s;
+        }
+        .btn-logout:hover {
+            background-color: #c9302c;
+            border-color: #ac2925;
+            color: white;
+        }
     </style>
 </head>
 <body>
-    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
             <a class="navbar-brand" href="index.php">
@@ -155,16 +168,16 @@ $pendapatan = $row_pendapatan['total'] ?? 0;
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item me-3">
+                        <span class="nav-link text-white">
                             <i class="fas fa-user-circle"></i> <?php echo htmlspecialchars($username); ?>
+                        </span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-sm btn-logout" href="auth/logout.php">
+                            <i class="fas fa-sign-out-alt"></i> Logout
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                            <li><a class="dropdown-item" href="profile.php">Profil</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="auth/logout.php">Logout</a></li>
-                        </ul>
                     </li>
                 </ul>
             </div>
@@ -173,7 +186,6 @@ $pendapatan = $row_pendapatan['total'] ?? 0;
 
     <div class="container-fluid">
         <div class="row">
-            <!-- Sidebar -->
             <nav class="col-md-2 sidebar">
                 <div class="nav flex-column">
                     <a href="index.php" class="nav-link active">
@@ -182,8 +194,8 @@ $pendapatan = $row_pendapatan['total'] ?? 0;
                     <a href="admin/produk_index.php" class="nav-link">
                         <i class="fas fa-box"></i> Produk
                     </a>
-                    <a href="user/transaksi.php" class="nav-link">
-                        <i class="fas fa-shopping-cart"></i> Transaksi
+                    <a href="admin/kategori_index.php" class="nav-link">
+                        <i class="fas fa-tag"></i> Kelola Kategori
                     </a>
                     <a href="admin/transaksi_list.php" class="nav-link">
                         <i class="fas fa-list"></i> Laporan
@@ -191,15 +203,12 @@ $pendapatan = $row_pendapatan['total'] ?? 0;
                 </div>
             </nav>
 
-            <!-- Main Content -->
             <main class="col-md-10 content">
-                <!-- Welcome Section -->
                 <div class="welcome-section">
                     <h1><i class="fas fa-wave-hand"></i> Selamat Datang, <?php echo htmlspecialchars($username); ?>!</h1>
                     <p>Sistem Manajemen Kasir Kopi - <?php echo date('l, d F Y'); ?></p>
                 </div>
 
-                <!-- Statistics Cards -->
                 <div class="row mb-4">
                     <div class="col-md-4 mb-3">
                         <div class="card stat-card">
@@ -209,7 +218,9 @@ $pendapatan = $row_pendapatan['total'] ?? 0;
                                         <h5 class="card-title">Total Produk</h5>
                                         <div class="stat-value"><?php echo $row_produk['total']; ?></div>
                                     </div>
-                                    <i class="fas fa-box"></i>
+                                    <div class="stat-icon-wrapper">
+                                        <i class="fas fa-box"></i>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -223,7 +234,9 @@ $pendapatan = $row_pendapatan['total'] ?? 0;
                                         <h5 class="card-title">Total Transaksi</h5>
                                         <div class="stat-value"><?php echo $row_transaksi['total']; ?></div>
                                     </div>
-                                    <i class="fas fa-shopping-cart"></i>
+                                    <div class="stat-icon-wrapper">
+                                        <i class="fas fa-shopping-cart"></i>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -237,14 +250,15 @@ $pendapatan = $row_pendapatan['total'] ?? 0;
                                         <h5 class="card-title">Total Pendapatan</h5>
                                         <div class="stat-value">Rp <?php echo number_format($pendapatan, 0, ',', '.'); ?></div>
                                     </div>
-                                    <i class="fas fa-dollar-sign"></i>
+                                    <div class="stat-icon-wrapper">
+                                        <i class="fas fa-dollar-sign"></i>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Quick Menu -->
                 <h3 class="mb-4"><i class="fas fa-th"></i> Menu Utama</h3>
                 <div class="menu-grid">
                     <a href="admin/produk_index.php" class="menu-card">
@@ -272,7 +286,6 @@ $pendapatan = $row_pendapatan['total'] ?? 0;
                     </a>
                 </div>
 
-                <!-- Recent Transactions -->
                 <div class="row mt-5">
                     <div class="col-md-12">
                         <div class="card">
@@ -282,8 +295,8 @@ $pendapatan = $row_pendapatan['total'] ?? 0;
                             <div class="card-body">
                                 <?php
                                 $query_recent = "SELECT t.*, u.username FROM transaksi t 
-                                                LEFT JOIN users u ON t.user_id = u.id 
-                                                ORDER BY t.tanggal DESC LIMIT 5";
+                                                 LEFT JOIN users u ON t.user_id = u.id 
+                                                 ORDER BY t.tanggal DESC LIMIT 5";
                                 $result = mysqli_query($conn, $query_recent);
 
                                 if (mysqli_num_rows($result) > 0) {

@@ -104,6 +104,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
             border-color: #6f4e37;
             box-shadow: 0 0 0 0.2rem rgba(111, 78, 55, 0.25);
         }
+        
+        /* START: Styling Tambahan untuk Toggle Password */
+        .input-group .form-control {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+            margin-bottom: 0; /* Penting untuk input-group */
+        }
+        .mb-3 .input-group {
+            margin-bottom: 15px; /* Menggantikan margin-bottom form-control */
+        }
+
+        /* Styling untuk tombol di dalam input-group */
+        .input-group .btn-outline-secondary {
+            border-color: #ddd;
+            background-color: #fff;
+            color: #666; 
+            transition: all 0.3s;
+            border-left: none; 
+            border-radius: 0 8px 8px 0; 
+        }
+
+        .input-group .btn-outline-secondary:hover {
+            background-color: #f8f8f8;
+            color: #6f4e37;
+            border-color: #6f4e37;
+            z-index: 2;
+        }
+
+        .input-group .btn-outline-secondary:focus {
+            box-shadow: none;
+            border-color: #6f4e37;
+        }
+        /* END: Styling Tambahan untuk Toggle Password */
+        
         .btn-login {
             width: 100%;
             background: linear-gradient(135deg, #6f4e37 0%, #8b5a3c 100%);
@@ -143,8 +177,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
     <div class="login-container">
         <div class="login-header">
             <i class="fas fa-coffee"></i>
-            <h1>Kasir Kopi</h1>
-            <p>Sistem Manajemen Penjualan</p>
+            <h1>Kopi 21</h1>
+            <p>Kopi Sekolah SMKN 21</p>
         </div>
 
         <div class="login-body">
@@ -164,10 +198,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
 
                 <div class="mb-3">
                     <label for="password" class="form-label">Password</label>
-                    <input type="password" class="form-control" id="password" name="password" 
-                           placeholder="Masukkan password" required>
+                    <div class="input-group">
+                        <input type="password" class="form-control" id="password" name="password" 
+                               placeholder="Masukkan password" required aria-label="Password">
+                        <button class="btn btn-outline-secondary" type="button" id="togglePassword" title="Tampilkan/Sembunyikan Password">
+                            <i class="fas fa-eye"></i> 
+                        </button>
+                    </div>
                 </div>
-
                 <button type="submit" name="login" class="btn-login">
                     <i class="fas fa-sign-in-alt"></i> Login
                 </button>
@@ -180,6 +218,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
 
+    <script>
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+
+        if (togglePassword && passwordInput) {
+            togglePassword.addEventListener('click', function () {
+                // Toggle the type attribute between 'password' and 'text'
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                
+                // Toggle the eye icon: fa-eye (show) / fa-eye-slash (hide)
+                this.querySelector('i').classList.toggle('fa-eye');
+                this.querySelector('i').classList.toggle('fa-eye-slash');
+            });
+        }
+    </script>
+    </body>
+</html>

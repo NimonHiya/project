@@ -223,13 +223,16 @@ $stat = $stat_stmt->get_result()->fetch_assoc();
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="../auth/logout.php">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+
+                    </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-user-circle"></i> <?php echo htmlspecialchars($username); ?>
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                            <li><a class="dropdown-item" href="../auth/logout.php">Logout</a></li>
-                        </ul>
                     </li>
                 </ul>
             </div>

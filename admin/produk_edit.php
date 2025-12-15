@@ -22,7 +22,7 @@ $id = (int)$_GET['id'];
 
 try {
     // Get product data
-    $stmt = $conn->prepare("SELECT id, nama_produk, deskripsi, harga, gambar, stok FROM produk WHERE id = ?");
+    $stmt = $conn->prepare("SELECT id, nama_produk, kategori, kategori_id, deskripsi, harga, gambar, stok FROM produk WHERE id = ?");
     $stmt->bind_param("i", $id);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -36,6 +36,8 @@ try {
     // Handle update
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit'])) {
         $nama = trim($_POST['nama'] ?? '');
+        $kategori = trim($_POST['kategori'] ?? '');
+        $kategori_id = isset($_POST['kategori_id']) && is_numeric($_POST['kategori_id']) ? (int)$_POST['kategori_id'] : null;
         $deskripsi = trim($_POST['deskripsi'] ?? '');
         $harga = $_POST['harga'] ?? '';
         $stok = $_POST['stok'] ?? '';
@@ -86,13 +88,15 @@ try {
             $harga = (float)$harga;
             $stok = (int)$stok;
 
-            $update_stmt = $conn->prepare("UPDATE produk SET nama_produk = ?, deskripsi = ?, harga = ?, gambar = ?, stok = ? WHERE id = ?");
-            $update_stmt->bind_param("ssdsii", $nama, $deskripsi, $harga, $gambar, $stok, $id);
+            $update_stmt = $conn->prepare("UPDATE produk SET nama_produk = ?, kategori = ?, kategori_id = ?, deskripsi = ?, harga = ?, gambar = ?, stok = ? WHERE id = ?");
+            $update_stmt->bind_param("ssisdsii", $nama, $kategori, $kategori_id, $deskripsi, $harga, $gambar, $stok, $id);
             $update_stmt->execute();
 
             $success = 'Produk berhasil diperbarui';
             // Refresh product data
             $product['nama_produk'] = $nama;
+            $product['kategori'] = $kategori;
+            $product['kategori_id'] = $kategori_id;
             $product['deskripsi'] = $deskripsi;
             $product['harga'] = $harga;
             $product['gambar'] = $gambar;
@@ -275,6 +279,23 @@ try {
                                         <input type="text" class="form-control" id="nama" name="nama" 
                                                placeholder="Nama produk" 
                                                value="<?php echo htmlspecialchars($product['nama_produk']); ?>" required>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="kategori_id" class="form-label">Kategori</label>
+                                        <select class="form-control" id="kategori_id" name="kategori_id">
+                                            <option value="">-- Pilih Kategori --</option>
+                                            <?php
+                                            $cats = $conn->query("SELECT id, nama FROM kategori ORDER BY nama");
+                                            if ($cats) {
+                                                while ($c = $cats->fetch_assoc()) {
+                                                    $sel = (isset($product['kategori_id']) && $product['kategori_id'] == $c['id']) || (isset($product['kategori']) && $product['kategori'] == $c['nama']) ? 'selected' : '';
+                                                    echo '<option value="' . $c['id'] . '" ' . $sel . '>' . htmlspecialchars($c['nama']) . '</option>';
+                                                }
+                                            }
+                                            ?>
+                                        </select>
+                                        <small class="form-text text-muted">Opsional - pilih kategori yang sesuai</small>
                                     </div>
 
                                     <div class="mb-3">

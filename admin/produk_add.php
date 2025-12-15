@@ -19,6 +19,8 @@ if (!is_dir($upload_dir)) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tambah'])) {
     $nama = trim($_POST['nama'] ?? '');
+    $kategori = trim($_POST['kategori'] ?? '');
+    $kategori_id = isset($_POST['kategori_id']) && is_numeric($_POST['kategori_id']) ? (int)$_POST['kategori_id'] : null;
     $harga = $_POST['harga'] ?? '';
     $stok = $_POST['stok'] ?? '';
     $deskripsi = trim($_POST['deskripsi'] ?? '');
@@ -64,13 +66,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tambah'])) {
 
             // Insert to database if no error
             if (!$error) {
-                $stmt = $conn->prepare("INSERT INTO produk (nama_produk, harga, stok, deskripsi, gambar) VALUES (?, ?, ?, ?, ?)");
-                $stmt->bind_param("sdiss", $nama, $harga, $stok, $deskripsi, $gambar);
+                $stmt = $conn->prepare("INSERT INTO produk (nama_produk, kategori, kategori_id, harga, stok, deskripsi, gambar) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                $stmt->bind_param("ssidiss", $nama, $kategori, $kategori_id, $harga, $stok, $deskripsi, $gambar);
                 $stmt->execute();
 
                 $success = 'Produk berhasil ditambahkan';
                 // Clear form
-                $nama = $harga = $stok = $deskripsi = '';
+                $nama = $kategori = $harga = $stok = $deskripsi = '';
             }
         } catch (Exception $e) {
             $error = 'Gagal menambah produk: ' . $e->getMessage();
@@ -253,6 +255,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tambah'])) {
                                         <input type="number" class="form-control" id="harga" name="harga" 
                                                placeholder="Contoh: 15000" step="100" min="0"
                                                value="<?php echo htmlspecialchars($harga ?? ''); ?>" required>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="kategori_id" class="form-label">Kategori</label>
+                                        <select class="form-control" id="kategori_id" name="kategori_id">
+                                            <option value="">-- Pilih Kategori --</option>
+                                            <?php
+                                            $cats = $conn->query("SELECT id, nama FROM kategori ORDER BY nama");
+                                            if ($cats) {
+                                                while ($c = $cats->fetch_assoc()) {
+                                                    $sel = (isset($kategori_id) && $kategori_id == $c['id']) ? 'selected' : '';
+                                                    echo '<option value="' . $c['id'] . '" ' . $sel . '>' . htmlspecialchars($c['nama']) . '</option>';
+                                                }
+                                            }
+                                            ?>
+                                        </select>
+                                        <small class="form-text text-muted">Opsional - pilih kategori yang ada</small>
                                     </div>
 
                                     <div class="mb-3">
