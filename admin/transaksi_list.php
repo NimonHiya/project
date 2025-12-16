@@ -223,7 +223,7 @@ $total_pendapatan = $total_result['total_pendapatan'] ?? 0;
                                         <tr>
                                             <th width="10%">ID</th>
                                             <th>Tanggal & Waktu</th>
-                                            <th>Nama Kasir</th>
+                                            <th>Nama</th>
                                             <th width="20%">Total</th>
                                             <th width="10%">Aksi</th>
                                         </tr>
