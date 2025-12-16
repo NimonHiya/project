@@ -12,21 +12,58 @@ $user_id = $_SESSION['user_id'];
 $success = '';
 $error = '';
 
-// Get search parameter
+// 1. Get search parameter
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 
-// Get products with search filter
+// --- PAGINATION SETUP ---
+$limit = 12; // Jumlah produk per halaman
+$page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
+$offset = ($page - 1) * $limit;
+$search_param = "%$search%";
+// -------------------------
+
+// 2. Count total products (with search filter)
 if (!empty($search)) {
-    $products_stmt = $conn->prepare("SELECT p.id, p.nama_produk, p.kategori, p.kategori_id, p.harga, p.stok, p.gambar, k.nama AS nama_kategori FROM produk p LEFT JOIN kategori k ON p.kategori_id = k.id WHERE stok > 0 AND nama_produk LIKE ? ORDER BY nama_produk");
-    $search_param = "%$search%";
-    $products_stmt->bind_param("s", $search_param);
+    $count_stmt = $conn->prepare("SELECT COUNT(*) AS total FROM produk WHERE stok > 0 AND nama_produk LIKE ?");
+    $count_stmt->bind_param("s", $search_param);
 } else {
-    $products_stmt = $conn->prepare("SELECT p.id, p.nama_produk, p.kategori, p.kategori_id, p.harga, p.stok, p.gambar, k.nama AS nama_kategori FROM produk p LEFT JOIN kategori k ON p.kategori_id = k.id WHERE stok > 0 ORDER BY nama_produk");
+    $count_stmt = $conn->prepare("SELECT COUNT(*) AS total FROM produk WHERE stok > 0");
+}
+$count_stmt->execute();
+$count_result = $count_stmt->get_result();
+$total_products = $count_result->fetch_assoc()['total'];
+
+// 4. Calculate total pages
+$totalPages = ceil($total_products / $limit);
+
+// Ensure current page is valid
+if ($page > $totalPages && $totalPages > 0) {
+    $page = $totalPages;
+    $offset = ($page - 1) * $limit;
+}
+
+// 6. Get products with search filter AND pagination limit
+if (!empty($search)) {
+    $products_stmt = $conn->prepare("SELECT p.id, p.nama_produk, p.kategori, p.kategori_id, p.harga, p.stok, p.gambar, k.nama AS nama_kategori 
+                                      FROM produk p 
+                                      LEFT JOIN kategori k ON p.kategori_id = k.id 
+                                      WHERE stok > 0 AND nama_produk LIKE ? 
+                                      ORDER BY nama_produk 
+                                      LIMIT ? OFFSET ?");
+    $products_stmt->bind_param("sii", $search_param, $limit, $offset);
+} else {
+    $products_stmt = $conn->prepare("SELECT p.id, p.nama_produk, p.kategori, p.kategori_id, p.harga, p.stok, p.gambar, k.nama AS nama_kategori 
+                                      FROM produk p 
+                                      LEFT JOIN kategori k ON p.kategori_id = k.id 
+                                      WHERE stok > 0 
+                                      ORDER BY nama_produk 
+                                      LIMIT ? OFFSET ?");
+    $products_stmt->bind_param("ii", $limit, $offset);
 }
 $products_stmt->execute();
 $products_result = $products_stmt->get_result();
 
-// Handle transaction submission
+// Handle transaction submission (Kode ini tidak diubah)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
     $total = 0;
     $items = array();
@@ -102,10 +139,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Transaksi Penjualan - Kasir Kopi</title>
+    <title>Transaksi Penjualan - Kopi 21</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        /* ... (CSS Styles remain the same) ... */
         body {
             background-color: #f8f9fa;
         }
@@ -282,7 +320,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
             .content {
                 padding: 10px;
             }
-            /* ... (Mobile styles lainnya tetap sama) ... */
             .mobile-nav {
                 display: flex;
                 position: fixed;
@@ -316,6 +353,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
             body {
                 padding-bottom: 60px;
             }
+            .product-list-container {
+                max-height: 50vh; /* Sesuaikan untuk layar kecil */
+            }
         }
 
         @media (min-width: 769px) {
@@ -329,7 +369,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
             <a class="navbar-brand" href="../home.php">
-                <i class="fas fa-coffee"></i> Kasir Kopi
+                <i class="fas fa-coffee"></i> Kopi 21
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -395,14 +435,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                                             <i class="fas fa-search"></i>
                                         </span>
                                         <input type="text" class="form-control" name="search" 
-                                               placeholder="Cari nama kopi..." 
-                                               value="<?php echo htmlspecialchars($search); ?>"
-                                               id="searchInput">
+                                            placeholder="Cari nama kopi..." 
+                                            value="<?php echo htmlspecialchars($search); ?>"
+                                            id="searchInput">
                                         <?php if (!empty($search)): ?>
                                             <a href="transaksi.php" class="btn btn-outline-secondary">
                                                 <i class="fas fa-times"></i> Reset
                                             </a>
                                         <?php endif; ?>
+                                        <input type="hidden" name="page" value="1"> 
                                     </div>
                                 </form>
                             </div>
@@ -415,73 +456,99 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                                         <div class="card-header bg-light">
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <h5 class="mb-0">Pilih Produk</h5>
-                                                <?php if (!empty($search)): ?>
-                                                    <small class="text-muted">
-                                                        <i class="fas fa-coffee"></i> 
-                                                        <?php echo $products_result->num_rows; ?> produk ditemukan
-                                                    </small>
-                                                <?php endif; ?>
+                                                <small class="text-muted">
+                                                     <i class="fas fa-coffee"></i> 
+                                                     <?php echo $total_products; ?> produk tersedia
+                                                </small>
                                             </div>
                                         </div>
                                         <div class="card-body p-0">
                                             <div class="product-list-container">
                                                 <div class="row row-cols-2 row-cols-md-3 g-3 p-3">
-                                                <?php 
-                                                // Reset pointer setelah pengecekan num_rows di atas
-                                                if ($products_result->num_rows > 0) {
-                                                    $products_result->data_seek(0);
-                                                }
-                                                ?>
-                                                <?php if ($products_result->num_rows > 0): ?>
-                                                    <?php while ($product = $products_result->fetch_assoc()): ?>
-                                                        <div class="col">
-                                                            <div class="card product-item">
-                                                                <?php 
-                                                                $image_path = !empty($product['gambar']) ? '../uploads/produk/' . $product['gambar'] : '../uploads/produk/default.jpg';
-                                                                ?>
-                                                                <img src="<?php echo htmlspecialchars($image_path); ?>" 
-                                                                     alt="<?php echo htmlspecialchars($product['nama_produk']); ?>" 
-                                                                     class="product-image"
-                                                                     onerror="this.src='../uploads/produk/default.jpg'">
-                                                                <div class="product-body">
-                                                                    <div>
-                                                                        <div class="product-name"><?php echo htmlspecialchars($product['nama_produk']); ?></div>
-                                                                        <div><small class="text-muted">Kategori: <?php echo htmlspecialchars($product['kategori'] ?? '-'); ?></small></div>
-                                                                        <div class="product-price">Rp <?php echo number_format($product['harga'], 0, ',', '.'); ?></div>
-                                                                        <small class="text-muted">Stok: <strong id="stok-<?php echo $product['id']; ?>"><?php echo htmlspecialchars($product['stok']); ?></strong></small>
-                                                                    </div>
-                                                                    <div class="qty-controls">
-                                                                        <button type="button" class="btn btn-sm btn-qty" onclick="changeQty(<?php echo $product['id']; ?>, -1)">-</button>
-                                                                        <input type="number" class="form-control form-control-sm qty-input" 
-                                                                               id="qty-<?php echo $product['id']; ?>"
-                                                                               name="qty[<?php echo $product['id']; ?>]" 
-                                                                               min="0" max="<?php echo $product['stok']; ?>" 
-                                                                               value="0" placeholder="0">
-                                                                        <button type="button" class="btn btn-sm btn-qty" onclick="changeQty(<?php echo $product['id']; ?>, 1)">+</button>
+                                                    <?php if ($products_result->num_rows > 0): ?>
+                                                        <?php while ($product = $products_result->fetch_assoc()): ?>
+                                                            <div class="col">
+                                                                <div class="card product-item">
+                                                                    <?php 
+                                                                    $image_path = !empty($product['gambar']) ? '../uploads/produk/' . $product['gambar'] : '../uploads/produk/default.jpg';
+                                                                    ?>
+                                                                    <img src="<?php echo htmlspecialchars($image_path); ?>" 
+                                                                        alt="<?php echo htmlspecialchars($product['nama_produk']); ?>" 
+                                                                        class="product-image"
+                                                                        onerror="this.src='../uploads/produk/default.jpg'">
+                                                                    <div class="product-body">
+                                                                        <div>
+                                                                            <div class="product-name"><?php echo htmlspecialchars($product['nama_produk']); ?></div>
+                                                                            <div><small class="text-muted">Kategori: <?php echo htmlspecialchars($product['nama_kategori'] ?? '-'); ?></small></div>
+                                                                            <div class="product-price">Rp <?php echo number_format($product['harga'], 0, ',', '.'); ?></div>
+                                                                            <small class="text-muted">Stok: <strong id="stok-<?php echo $product['id']; ?>"><?php echo htmlspecialchars($product['stok']); ?></strong></small>
+                                                                        </div>
+                                                                        <div class="qty-controls">
+                                                                            <button type="button" class="btn btn-sm btn-qty" onclick="changeQty(<?php echo $product['id']; ?>, -1)">-</button>
+                                                                            <input type="number" class="form-control form-control-sm qty-input" 
+                                                                                id="qty-<?php echo $product['id']; ?>"
+                                                                                name="qty[<?php echo $product['id']; ?>]" 
+                                                                                min="0" max="<?php echo $product['stok']; ?>" 
+                                                                                value="0" placeholder="0">
+                                                                            <button type="button" class="btn btn-sm btn-qty" onclick="changeQty(<?php echo $product['id']; ?>, 1)">+</button>
+                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                             </div>
+                                                        <?php endwhile; ?>
+                                                    <?php else: ?>
+                                                        <div class="alert alert-info m-3 w-100">
+                                                            <i class="fas fa-search"></i> 
+                                                            <?php if (!empty($search)): ?>
+                                                                Tidak ada produk ditemukan untuk "<strong><?php echo htmlspecialchars($search); ?></strong>". 
+                                                                <br><a href="transaksi.php" class="alert-link">Tampilkan semua produk</a>
+                                                            <?php else: ?>
+                                                                <i class="fas fa-info-circle"></i> Tidak ada produk yang tersedia.
+                                                            <?php endif; ?>
                                                         </div>
-                                                    <?php endwhile; ?>
-                                                <?php else: ?>
-                                                    <div class="alert alert-info m-3 w-100">
-                                                        <i class="fas fa-search"></i> 
-                                                        <?php if (!empty($search)): ?>
-                                                            Tidak ada produk ditemukan untuk "<strong><?php echo htmlspecialchars($search); ?></strong>". 
-                                                            <br><a href="transaksi.php" class="alert-link">Tampilkan semua produk</a>
-                                                        <?php else: ?>
-                                                            <i class="fas fa-info-circle"></i> Tidak ada produk yang tersedia.
-                                                        <?php endif; ?>
-                                                    </div>
-                                                <?php endif; ?>
+                                                    <?php endif; ?>
                                                 </div>
                                             </div>
-                                        </div>
+
+                                            <?php if ($totalPages > 1): ?>
+                                                <nav class="p-3">
+                                                    <ul class="pagination justify-content-center mb-0">
+                                                        <?php 
+                                                            // Helper function to build pagination URL
+                                                            function getPaginationUrl($page, $search) {
+                                                                $url = 'transaksi.php?page=' . $page;
+                                                                if (!empty($search)) {
+                                                                    $url .= '&search=' . urlencode($search);
+                                                                }
+                                                                return $url;
+                                                            }
+                                                        ?>
+
+                                                        <li class="page-item <?php echo ($page <= 1) ? 'disabled' : ''; ?>">
+                                                            <a class="page-link" href="<?php echo getPaginationUrl($page - 1, $search); ?>" tabindex="-1">Previous</a>
+                                                        </li>
+
+                                                        <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                                                            <li class="page-item <?php echo ($i == $page) ? 'active' : ''; ?>">
+                                                                <a class="page-link" href="<?php echo getPaginationUrl($i, $search); ?>">
+                                                                    <?php echo $i; ?>
+                                                                </a>
+                                                            </li>
+                                                        <?php endfor; ?>
+
+                                                        <li class="page-item <?php echo ($page >= $totalPages) ? 'disabled' : ''; ?>">
+                                                            <a class="page-link" href="<?php echo getPaginationUrl($page + 1, $search); ?>">Next</a>
+                                                        </li>
+                                                    </ul>
+                                                </nav>
+                                            <?php endif; ?>
+                                            </div>
                                     </div>
                                 </div>
 
                                 <div class="col-md-4">
-                                    <div class="card sticky-top" style="top: 76px;"> <div class="card-header bg-light">
+                                    <div class="card sticky-top" style="top: 76px;"> 
+                                        <div class="card-header bg-light">
                                             <h5 class="mb-0">Ringkasan</h5>
                                         </div>
                                         <div class="card-body">
@@ -494,7 +561,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                                             </div>
 
                                             <button type="submit" name="submit" class="btn btn-primary w-100 mt-3" 
-                                                    <?php echo $products_result->num_rows === 0 ? 'disabled' : ''; ?>>
+                                                <?php echo $total_products === 0 ? 'disabled' : ''; ?>>
                                                 <i class="fas fa-check-circle"></i> Proses Pembayaran
                                             </button>
                                             <a href="../home.php" class="btn btn-secondary w-100 mt-2">
@@ -542,7 +609,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                 if (productItem) {
                     const priceText = productItem.querySelector('.product-price').textContent;
                     // Hapus semua karakter non-angka kecuali koma/titik pemisah ribuan (dan ambil angkanya)
-                    const price = parseInt(priceText.replace(/\D/g, ''));
+                    // Menggunakan regex yang lebih tepat untuk parsing IDR
+                    const price = parseInt(priceText.replace('Rp', '').replace(/\./g, '').trim()) || 0;
                     
                     if (qty > 0) {
                         total += price * qty;
@@ -594,6 +662,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
         if (searchInput) {
             searchInput.addEventListener('input', function() {
                 clearTimeout(searchTimeout);
+                // Reset page to 1 when searching
+                document.querySelector('input[name="page"]').value = 1; 
                 searchTimeout = setTimeout(() => {
                     this.form.submit();
                 }, 500);
@@ -602,6 +672,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
             searchInput.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     clearTimeout(searchTimeout);
+                    document.querySelector('input[name="page"]').value = 1;
                     this.form.submit();
                 }
             });
@@ -618,14 +689,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                 
                 // Tambahkan validasi saat input manual agar tidak melebihi stok
                 input.addEventListener('input', function() {
-                     const maxStok = parseInt(this.getAttribute('max'));
-                     if (parseInt(this.value) > maxStok) {
-                         this.value = maxStok;
-                     }
-                     if (parseInt(this.value) < 0) {
-                         this.value = 0;
-                     }
-                     calculateTotal(); // Panggil calculateTotal setelah perubahan manual
+                    // Pastikan input hanya angka positif
+                    let value = parseInt(this.value);
+                    if (isNaN(value) || value < 0) {
+                        value = 0;
+                    }
+
+                    const maxStok = parseInt(this.getAttribute('max'));
+                    if (value > maxStok) {
+                        this.value = maxStok;
+                    } else {
+                         this.value = value;
+                    }
+                    calculateTotal(); // Panggil calculateTotal setelah perubahan manual
                 });
             });
         });

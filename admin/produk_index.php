@@ -45,7 +45,29 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
 }
 
 // Get all products. Note: p.kategori (kolom lama) tetap di-select sebagai referensi jika diperlukan.
-$products = $conn->query("SELECT p.id, p.nama_produk, p.kategori, p.kategori_id, p.deskripsi, p.harga, p.gambar, p.stok, k.nama AS nama_kategori FROM produk p LEFT JOIN kategori k ON p.kategori_id = k.id ORDER BY p.id DESC");
+// Pagination setup
+$page = isset($_GET['page']) && is_numeric($_GET['page']) && $_GET['page'] > 0 ? (int)$_GET['page'] : 1;
+$per_page = 10;
+$offset = ($page - 1) * $per_page;
+
+// Count total products
+$total = 0;
+$count_res = $conn->query("SELECT COUNT(*) AS total FROM produk");
+if ($count_res) {
+    $row_total = $count_res->fetch_assoc();
+    $total = (int)($row_total['total'] ?? 0);
+}
+$total_pages = max(1, (int)ceil($total / $per_page));
+if ($page > $total_pages) {
+    $page = $total_pages;
+    $offset = ($page - 1) * $per_page;
+}
+
+// Get products with limit/offset
+$products_stmt = $conn->prepare("SELECT p.id, p.nama_produk, p.kategori, p.kategori_id, p.deskripsi, p.harga, p.gambar, p.stok, k.nama AS nama_kategori FROM produk p LEFT JOIN kategori k ON p.kategori_id = k.id ORDER BY p.id DESC LIMIT ? OFFSET ?");
+$products_stmt->bind_param("ii", $per_page, $offset);
+$products_stmt->execute();
+$products = $products_stmt->get_result();
 ?>
 
 <!DOCTYPE html>
@@ -280,6 +302,25 @@ $products = $conn->query("SELECT p.id, p.nama_produk, p.kategori, p.kategori_id,
                                     </tbody>
                                 </table>
                             </div>
+
+                            <?php if ($total_pages > 1): ?>
+                                <nav aria-label="Pagination">
+                                    <ul class="pagination justify-content-center mt-3">
+                                        <?php $prev = max(1, $page - 1); $next = min($total_pages, $page + 1); ?>
+                                        <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>">
+                                            <a class="page-link" href="?page=<?php echo $prev; ?>" aria-label="Previous">&laquo;</a>
+                                        </li>
+                                        <?php for ($p = 1; $p <= $total_pages; $p++): ?>
+                                            <li class="page-item <?php echo ($p == $page) ? 'active' : ''; ?>">
+                                                <a class="page-link" href="?page=<?php echo $p; ?>"><?php echo $p; ?></a>
+                                            </li>
+                                        <?php endfor; ?>
+                                        <li class="page-item <?php echo $page >= $total_pages ? 'disabled' : ''; ?>">
+                                            <a class="page-link" href="?page=<?php echo $next; ?>" aria-label="Next">&raquo;</a>
+                                        </li>
+                                    </ul>
+                                </nav>
+                            <?php endif; ?>
                         <?php else: ?>
                             <div class="alert alert-info">
                                 <i class="fas fa-info-circle"></i> Belum ada produk. <a href="produk_add.php">Tambah produk sekarang</a>
