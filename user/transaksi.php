@@ -564,9 +564,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                                                 <?php echo $total_products === 0 ? 'disabled' : ''; ?>>
                                                 <i class="fas fa-check-circle"></i> Proses Pembayaran
                                             </button>
-                                            <a href="../home.php" class="btn btn-secondary w-100 mt-2">
+                                            <!-- <a href="../home.php" class="btn btn-secondary w-100 mt-2">
                                                 <i class="fas fa-arrow-left"></i> Kembali
-                                            </a>
+                                            </a> -->
                                         </div>
                                     </div>
                                 </div>

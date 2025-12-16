@@ -236,7 +236,7 @@ try {
                     <a href="../index.php" class="nav-link">
                         <i class="fas fa-home"></i> Dashboard
                     </a>
-                    <a href="produk_index.php" class="nav-link">
+                    <a href="produk_index.php" class="nav-link active">
                         <i class="fas fa-box"></i> Daftar Produk
                     </a>
                     <a href="kategori_index.php" class="nav-link">
