@@ -58,7 +58,7 @@ try {
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, #6f4e37 0%, #8b5a3c 100%);">
     <div class="container-fluid">
-        <a class="navbar-brand" href="../index.php"><i class="fas fa-coffee"></i> Kasir Kopi</a>
+        <a class="navbar-brand" href="../index.php"><i class="fas fa-coffee"></i> Kopi 21</a>
     </div>
 </nav>
 

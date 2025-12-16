@@ -215,8 +215,8 @@ $stat = $stat_stmt->get_result()->fetch_assoc();
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
-            <a class="navbar-brand" href="../home.php">
-                <i class="fas fa-coffee"></i> Kasir Kopi
+            <a class="navbar-brand" href="../index.php">
+                <i class="fas fa-coffee"></i> Kopi 21
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>

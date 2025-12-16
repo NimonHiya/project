@@ -182,7 +182,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tambah'])) {
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
             <a class="navbar-brand" href="../index.php">
-                <i class="fas fa-coffee"></i> Kasir Kopi
+                <i class="fas fa-coffee"></i> Kopi 21
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -210,7 +210,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tambah'])) {
                     <a href="../index.php" class="nav-link">
                         <i class="fas fa-home"></i> Dashboard
                     </a>
-                    <a href="produk_index.php" class="nav-link">
+                    <a href="produk_index.php" class="nav-link active">
                         <i class="fas fa-box"></i> Daftar Produk
                     </a>
                     <a href="kategori_index.php" class="nav-link">
