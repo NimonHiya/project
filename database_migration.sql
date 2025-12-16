@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS transaksi (
     user_id INT NOT NULL,
     total DECIMAL(10,2) NOT NULL,
     metode_pembayaran VARCHAR(50) DEFAULT NULL,
+    uang_dibayar DECIMAL(10,2) DEFAULT NULL,
     status VARCHAR(20) DEFAULT 'pending',
     tanggal TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -76,6 +77,7 @@ ON DUPLICATE KEY UPDATE nama_produk=nama_produk;
 
 -- Migration untuk upgrade dari versi lama
 ALTER TABLE transaksi ADD COLUMN IF NOT EXISTS metode_pembayaran VARCHAR(50) DEFAULT NULL AFTER total;
+ALTER TABLE transaksi ADD COLUMN IF NOT EXISTS uang_dibayar DECIMAL(10,2) DEFAULT NULL AFTER metode_pembayaran;
 ALTER TABLE transaksi ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'pending' AFTER metode_pembayaran;
 ALTER TABLE produk ADD COLUMN IF NOT EXISTS deskripsi TEXT NULL AFTER nama_produk;
 ALTER TABLE produk ADD COLUMN IF NOT EXISTS gambar VARCHAR(255) NULL AFTER harga;
